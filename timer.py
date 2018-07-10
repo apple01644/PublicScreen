@@ -36,38 +36,38 @@ class timer:
         self.add_time(6,20,'기상',tag='{평일}{아침}')
         self.add_time(6,30,"스트레칭",tag='{평일}{아침}')
         self.add_time(7,20,'아침 식사',tag='{평일}{아침}')
-        self.add_time(7,50,'등교',tag='{평일}')
+        self.add_time(7,50,'등교',tag='{평일}{자율}')
         self.add_time(8,20,'조례',tag='{평일}')
-        self.add_time(8,30,'쉬는 시간',tag='{평일}')
+        self.add_time(8,30,'쉬는 시간',tag='{평일}{자율}')
         self.add_time(8,35,'1교시',tag='{평일}')
-        self.add_time(9,25,'쉬는시간',tag='{평일}')
+        self.add_time(9,25,'쉬는시간',tag='{평일}{자율}')
         self.add_time(9,40,'2교시',tag='{평일}')
-        self.add_time(10,30,'쉬는시간',tag='{평일}')
+        self.add_time(10,30,'쉬는시간',tag='{평일}{자율}')
         self.add_time(10,45,'3교시',tag='{평일}{점심}')
-        self.add_time(11,35,'쉬는시간',tag='{평일}{점심}')
+        self.add_time(11,35,'쉬는시간',tag='{평일}{점심}{자율}')
         self.add_time(11,50,'4교시',tag='{평일}{점심}')
-        self.add_time(12,40,'점심시간',tag='{평일}{점심}')
+        self.add_time(12,40,'점심시간',tag='{평일}{점심}{자율}')
         
         
         self.add_time(13,30,'5교시',tag='{평일}')
-        self.add_time(14,20,'쉬는시간',tag='{평일}')
+        self.add_time(14,20,'쉬는시간',tag='{평일}{자율}')
         self.add_time(14,35,'6교시',tag='{평일}')
-        self.add_time(15,25,'쉬는시간',tag='{평일}')
+        self.add_time(15,25,'쉬는시간',tag='{평일}{자율}')
         self.add_time(15,40,'7교시',tag='{평일}')
         
         self.add_time(16,30,'종례 및 청소',tag='{평일}')
         
         self.add_time(16,50,'8교시',tag='{평일}')
-        self.add_time(17,40,'쉬는시간',tag='{평일}{저녁}')
+        self.add_time(17,40,'쉬는시간',tag='{평일}{저녁}{자율}')
         self.add_time(17,50,'9교시',tag='{평일}{저녁}')
         
-        self.add_time(18,40,'져녁시간',tag='{평일}{저녁}')
+        self.add_time(18,40,'져녁시간',tag='{평일}{저녁}{자율}')
         self.add_time(19,30,'자율1교시',tag='{평일}')
-        self.add_time(20,20,'쉬는시간',tag='{평일}')
+        self.add_time(20,20,'쉬는시간',tag='{평일}{자율}')
         self.add_time(20,30,'자율2교시',tag='{평일}')
 
         self.add_time(21,20,'기숙사 이동',tag='{평일}')
-        self.add_time(21,30,'개인시간',tag='{평일}')
+        self.add_time(21,30,'개인시간',tag='{평일}{자율}')
         self.add_time(22,20,'점호',tag='{평일}')
         self.add_time(22,30,'',tag='{평일}')
 
@@ -81,7 +81,7 @@ class timer:
             r = True
         return r
     def env_set(self, t_i):
-        if t_i['tag'].find('{아침}') >= 0 or t_i['tag'].find('{점심}') >= 0  or t_i['tag'].find('{저녁}') >= 0 :
+        if (t_i['tag'].find('{아침}') >= 0 or t_i['tag'].find('{점심}') >= 0  or t_i['tag'].find('{저녁}') >= 0) and t_i['tag'].find('{자율}')>=0:
             if not pygame.mixer.music.get_busy():
                     pygame.mixer.music.play(1)
         elif pygame.mixer.music.get_busy():
