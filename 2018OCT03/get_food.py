@@ -16,6 +16,7 @@ def get_food(a):
     src = src.replace('\t','')
     src = src.replace('\n','')
     src = src.replace('\r','')
+    src = src.replace('ㆍ','')    
 
     src = src.replace('.','')
     src = src.replace('0','')

@@ -3,7 +3,7 @@ from random import randint
 from pygame.locals import *
 import pygame, os, time, sys, traceback
 
-
+ 
 c_black = (0,0,0)
 c_white = (255,255,255)
 
@@ -130,8 +130,8 @@ class main:
                             if not acts[s].step(surfs[0]):
                                 self.act[s] = 0
                 except Exception as e:
-                    #for s in act_names:
-                    #    self.act[s] = 0
+                    for s in act_names:
+                        self.act[s] = 0
                     exc_type, exc_obj, exc_tb = sys.exc_info()
                     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                     error = traceback.format_exc()
