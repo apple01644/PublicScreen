@@ -44,6 +44,8 @@ class timer:
     tube_queue = False
     tube_title = ''
     
+    force_play_movie = False
+
     def get_youtube(self, link):
         self.tube_busy = True
         try:
@@ -154,10 +156,6 @@ class timer:
             self.tube_list = self.fb.get('tube', None)
             self.tube_key = list(self.tube_list.keys())
             random.shuffle(self.tube_key, random.random)
-
-            for _ in self.tube_key:
-                print(_)
-
             self.tube_csr = 0
         j = 0
         for _ in self.tube_key:
@@ -206,6 +204,9 @@ class timer:
     def step(self, surf):
         for event in pygame.event.get():
             if event.type == KEYDOWN:
+                if event.key == K_SPACE:
+                    self.force_play_movie = not self.force_play_movie
+                    print('PRESS Space')
                 if event.key == K_q:
                     return False
                     break
@@ -284,7 +285,7 @@ class timer:
                 self.draw_string(self.font6,surf,'http://대소고.oa.to/',x=-self.W * 0.25,y = self.H / 2 - self.FONT_SIZE / 2, color = self.text_color)
                 if self.movie == None:
                     if self.tube_queue:
-                        if t_i['tag'].find('{자율}') >= 0 or True:
+                        if t_i['tag'].find('{자율}') >= 0 or self.force_play_movie:
                             shutil.copy2('queue.mp4','play.mp4')
                             self.movie = moviepy.editor.VideoFileClip('play.mp4')
                             self.movie_title = self.tube_title
@@ -293,12 +294,14 @@ class timer:
                         else:
                             pygame.draw.rect(surf, self.text_color, (640,360,640,360))
                             surf.blit(self.wait_image, (640,360))
+                            print('111')
                     else:
                         pygame.draw.rect(surf, self.text_color, (640,360,640,360))
                         surf.blit(self.wait_image, (640,360))
+                        print('222')
                         if not self.tube_busy:
                             self.next_tube()
-                elif t_i['tag'].find('{자율}') >= 0 or True:
+                elif t_i['tag'].find('{자율}') >= 0 or self.force_play_movie:
                     if self.movie_run:
                         #Video run
                         if time.time() - self.movie_start < self.movie.duration-.001:
@@ -327,6 +330,7 @@ class timer:
                             else:
                                 pygame.draw.rect(surf, self.text_color, (640,360,640,360))
                                 surf.blit(self.wait_image, (640,360))
+                                print('333')
                     else:
                         self.play_tube()
                     if not (self.tube_queue or self.tube_busy):
@@ -334,6 +338,7 @@ class timer:
                 else:
                     pygame.draw.rect(surf, self.text_color, (640,360,640,360))
                     surf.blit(self.wait_image, (640,360))
+                    print('444')
             else:
                 if self.food != None:
                     self.fd_life = 300
