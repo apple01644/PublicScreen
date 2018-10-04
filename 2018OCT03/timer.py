@@ -23,13 +23,13 @@ class timer:
     lt_life = 1
 
     food = None
-    fd_life = 0
 
     wait_image = None
 
     movie = None
     movie_start = 0
     movie_run = False
+    movie_play = False
     movie_buf = None
     movie_title = ''
     
@@ -55,6 +55,7 @@ class timer:
             flt.first().download('',filename='queue')
         except:
             self.tube_busy = False
+            print('Failed download')
             return
         self.tube_queue = True
         self.tube_busy = False
@@ -106,9 +107,9 @@ class timer:
         self.add_time(15,10,'쉬는시간',tag='{평일}{자율}')
         self.add_time(15,20,'7교시',tag='{평일}')
         
-        self.add_time(16,10,'종례 및 청소',tag='{평일}')
+        self.add_time(16,10,'종례 및 청소',tag='{평일}{저녁}')
         
-        self.add_time(16,30,'8교시',tag='{평일}')
+        self.add_time(16,30,'8교시',tag='{평일}{저녁}')
         self.add_time(17,20,'쉬는시간',tag='{평일}{저녁}{자율}')
         self.add_time(17,30,'9교시',tag='{평일}{저녁}')
         
@@ -139,11 +140,44 @@ class timer:
             r = True
         return r
 
+    def play_audio(self, clip, fps=22050,  buffersize=4000, nbytes=2, audioFlag=None,videoFlag=None):
+                 
+        pygame.mixer.quit()
+        
+        pygame.mixer.init(fps, -8 * nbytes, clip.nchannels, 1024)
+        totalsize = int(fps*clip.duration)
+        pospos = np.array(list(range(0, totalsize,  buffersize))+[totalsize])
+        tt = (1.0/fps)*np.arange(pospos[0], pospos[1])
+        sndarray = clip.to_soundarray(tt, nbytes=nbytes, quantize=True)
+        chunk = pygame.sndarray.make_sound(sndarray)
+        
+        if (audioFlag is not None) and (videoFlag is not None):
+            audioFlag.set()
+            videoFlag.wait()
+            
+        channel = chunk.play()
+        i = 1
+        while i < len(pospos)-1:
+            while not self.movie_play:
+                i = 1 + int((len(pospos)-3) * (time.time() - self.movie_start) / clip.duration)
+            tt = (1.0/fps)*np.arange(pospos[i], pospos[i+1])
+            sndarray = clip.to_soundarray(tt, nbytes=nbytes, quantize=True)
+            chunk = pygame.sndarray.make_sound(sndarray)
+            while channel.get_queue():
+                time.sleep(0.003)
+                if videoFlag is not None:
+                    if not videoFlag.is_set():
+                        channel.stop()
+                        del channel
+                        return
+            channel.queue(chunk)
+            i += 1
+
     def play_tube(self):
         if self.movie.audio != None:
             videoFlag = threading.Event()
             audioFlag = threading.Event()
-            audiothread = threading.Thread(target=self.movie.audio.preview, args=(22050, 3000, 2, audioFlag, videoFlag))
+            audiothread = threading.Thread(target=self.play_audio, args=(self.movie.audio, 22050, 3000, 2, audioFlag, videoFlag))
             audiothread.start()
             videoFlag.set()
             audioFlag.wait()
@@ -156,6 +190,8 @@ class timer:
             self.tube_list = self.fb.get('tube', None)
             self.tube_key = list(self.tube_list.keys())
             random.shuffle(self.tube_key, random.random)
+            for _ in self.tube_key:
+                print(_)
             self.tube_csr = 0
         j = 0
         for _ in self.tube_key:
@@ -213,7 +249,7 @@ class timer:
         
         surf.fill(self.back_color)
         
-        dt = datetime.datetime.now() + datetime.timedelta(seconds=29)        
+        dt = datetime.datetime.now() + datetime.timedelta(seconds=29 + 5)        
         string = None
         next_time = None
 
@@ -239,24 +275,22 @@ class timer:
         if t_i != -1:
             self.env_set(t_i)
             if t_i['tag'].find('{아침}') >= 0 or t_i['tag'].find('{점심}') >= 0 or t_i['tag'].find('{저녁}') >= 0:
-                if self.fd_life > 290:
+                if self.food == None:
                     if t_i['tag'].find('{아침}') >= 0:
                         self.food = get_food.get_food(0)
-                        self.fd_life = 0
                     elif t_i['tag'].find('{점심}') >= 0:
                         self.food = get_food.get_food(1)
-                        self.fd_life = 0
                     elif t_i['tag'].find('{저녁}') >= 0:
                         self.food = get_food.get_food(2)
-                        self.fd_life = 0
-                if self.fd_life == 0 and self.food != None:
+                else:
                     i = 0
                     for s in self.food:
                         self.draw_string(self.font3,surf, s,x=-self.FONT_SIZE*3.5, y = (self.lt_life - 1)*0.5*self.FONT_SIZE*(-len(self.food)/2 + 0.5 + i),  color = self.text_color)
                         i += 1
                     if self.lt_life != 2.85:
                         self.lt_life += (2.85 - self.lt_life) * 0.4
-
+            else:
+                self.food = None
             if string != '' and string != None:
                 self.draw_string(self.font5,surf,string,x=-self.FONT_SIZE*3.5,y=-self.FONT_SIZE*self.lt_life,  color = self.text_color)
                 ddt = datetime.datetime(year = dt.year, month = dt.month, day = dt.day,hour = t_tt // 60, minute = t_tt % 60) - dt
@@ -283,7 +317,9 @@ class timer:
                             break
                         j += 1
                 self.draw_string(self.font6,surf,'http://대소고.oa.to/',x=-self.W * 0.25,y = self.H / 2 - self.FONT_SIZE / 2, color = self.text_color)
+                
                 if self.movie == None:
+                    self.movie_play = False
                     if self.tube_queue:
                         if t_i['tag'].find('{자율}') >= 0 or self.force_play_movie:
                             shutil.copy2('queue.mp4','play.mp4')
@@ -294,11 +330,9 @@ class timer:
                         else:
                             pygame.draw.rect(surf, self.text_color, (640,360,640,360))
                             surf.blit(self.wait_image, (640,360))
-                            print('111')
                     else:
                         pygame.draw.rect(surf, self.text_color, (640,360,640,360))
                         surf.blit(self.wait_image, (640,360))
-                        print('222')
                         if not self.tube_busy:
                             self.next_tube()
                 elif t_i['tag'].find('{자율}') >= 0 or self.force_play_movie:
@@ -313,9 +347,10 @@ class timer:
                             pygame.draw.rect(surf, self.back_color, (640,720-self.FONT_SIZE // 4- self.FONT_SIZE / 4,640,self.FONT_SIZE // 4 + self.FONT_SIZE / 4))
                             PADD = 2
                             pygame.draw.rect(surf, self.text_color,(640 + PADD, 720 - self.FONT_SIZE // 2 + PADD,max(int(640 * (time.time() - self.movie_start) / self.movie.duration + 1) - PADD * 2,0), self.FONT_SIZE // 4 + self.FONT_SIZE / 4 - PADD * 2))
-                            self.draw_string(self.font4,surf,self.movie_title,x=self.W * 0.25,y = self.H / 2 - self.FONT_SIZE / 4, color = self.text_color, max_len = 60, back_color = self.back_color)
-                            
+                            self.draw_string(self.font4,surf,self.movie_title,x=self.W * 0.25,y = self.H / 2 - self.FONT_SIZE / 3, color = self.text_color, max_len = 60, back_color = self.back_color)
+                            self.movie_play = True
                         else: #Video End
+                            self.movie_play = False
                             if self.tube_queue:
                                 self.movie.close()
                                 try:
@@ -330,24 +365,18 @@ class timer:
                             else:
                                 pygame.draw.rect(surf, self.text_color, (640,360,640,360))
                                 surf.blit(self.wait_image, (640,360))
-                                print('333')
                     else:
                         self.play_tube()
+                        self.movie_play = False
                     if not (self.tube_queue or self.tube_busy):
                         self.next_tube()
                 else:
                     pygame.draw.rect(surf, self.text_color, (640,360,640,360))
                     surf.blit(self.wait_image, (640,360))
-                    print('444')
+                    self.movie_play = False
             else:
-                if self.food != None:
-                    self.fd_life = 300
-                    self.food = None
                 surf.blit(self.wait_image, (320,180))
             
-
-        if self.fd_life > 0:
-            self.fd_life -= 1
         if self.rt_life == 0:
             self.rt_life = 1000
             self.rt_cursor += 1
