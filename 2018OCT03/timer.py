@@ -45,6 +45,7 @@ class timer:
     tube_title = ''
     
     force_play_movie = False
+    force_unplay_movie = True
 
     def get_youtube(self, link):
         self.tube_busy = True
@@ -321,7 +322,7 @@ class timer:
                 if self.movie == None:
                     self.movie_play = False
                     if self.tube_queue:
-                        if t_i['tag'].find('{자율}') >= 0 or self.force_play_movie:
+                        if (t_i['tag'].find('{자율}') >= 0 or self.force_play_movie) and (not force_unplay_movie):
                             shutil.copy2('queue.mp4','play.mp4')
                             self.movie = moviepy.editor.VideoFileClip('play.mp4')
                             self.movie_title = self.tube_title
@@ -335,7 +336,7 @@ class timer:
                         surf.blit(self.wait_image, (640,360))
                         if not self.tube_busy:
                             self.next_tube()
-                elif t_i['tag'].find('{자율}') >= 0 or self.force_play_movie:
+                elif (t_i['tag'].find('{자율}') >= 0 or self.force_play_movie) and (not force_unplay_movie):
                     if self.movie_run:
                         #Video run
                         if time.time() - self.movie_start < self.movie.duration-.001:
