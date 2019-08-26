@@ -1,4 +1,5 @@
 __pycache__/
 *.pyc
-play.mp4
-queue.mp4
+/2018OCT03/play.mp4
+/2018OCT03/queue.mp4
+/.vs/PublicScreen/v16/.suo

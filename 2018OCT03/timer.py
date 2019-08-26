@@ -6,7 +6,7 @@ import get_food
 from firebase import firebase
 import moviepy.editor
 from pygame.locals import *
-import threading, time, pytube, os, shutil
+import threading, time, youtube_dl, os, shutil
 import numpy as np
 from moviepy.decorators import requires_duration
 
@@ -44,20 +44,23 @@ class timer:
     tube_queue = False
     tube_title = ''
     
-    force_play_movie = False
-    force_unplay_movie = True
+    force_play_movie = True
+    force_unplay_movie = False
+
+    ydl_opts = {'ext' : 'mp4', 'acodec' : 'mp4a.40.2', 'outtmpl' : 'queue.mp4'}
+    ydl = None
 
     def get_youtube(self, link):
         self.tube_busy = True
         try:
-            yt = pytube.YouTube(link)
-            self.tube_title = yt.title
-            flt = yt.streams.filter(mime_type='video/mp4', audio_codec='mp4a.40.2')
-            flt.first().download('',filename='queue')
-        except:
+            #print(link)
+            self.ydl.download([link])
+            self.tube_title = self.ydl.extract_info(link, download=False).get("title", 'Untitled')
+        except Exception as e:
             self.tube_busy = False
-            print('Failed download')
+            print('Failed download ' + str(e) + " : " + link)
             return
+        print('Success download : ' + link)
         self.tube_queue = True
         self.tube_busy = False
         
@@ -133,6 +136,8 @@ class timer:
         self.add_time(21,20,'개인시간',tag='{휴일}{자율}')
         self.add_time(21,40,'저녁점호',tag='{휴일}')
         self.add_time(21,50,'',tag='{휴일}')
+
+        self.ydl = youtube_dl.YoutubeDL(self.ydl_opts)
     def tag_cond(self, t, dt):
         r = False
         if t['tag'].find('{평일}')>=0 and dt.weekday() < 5:
@@ -322,7 +327,7 @@ class timer:
                 if self.movie == None:
                     self.movie_play = False
                     if self.tube_queue:
-                        if (t_i['tag'].find('{자율}') >= 0 or self.force_play_movie) and (not force_unplay_movie):
+                        if (t_i['tag'].find('{자율}') >= 0 or self.force_play_movie) and (not self.force_unplay_movie):
                             shutil.copy2('queue.mp4','play.mp4')
                             self.movie = moviepy.editor.VideoFileClip('play.mp4')
                             self.movie_title = self.tube_title
@@ -336,7 +341,7 @@ class timer:
                         surf.blit(self.wait_image, (640,360))
                         if not self.tube_busy:
                             self.next_tube()
-                elif (t_i['tag'].find('{자율}') >= 0 or self.force_play_movie) and (not force_unplay_movie):
+                elif (t_i['tag'].find('{자율}') >= 0 or self.force_play_movie) and (not self.force_unplay_movie):
                     if self.movie_run:
                         #Video run
                         if time.time() - self.movie_start < self.movie.duration-.001:

@@ -54,7 +54,7 @@ class main:
         w = 1280
         h = 720
         
-        is_full = 1
+        is_full = 0
         if is_full != 0:
             surf = pygame.display.set_mode((0,0),pygame.FULLSCREEN|pygame.DOUBLEBUF)
         else:
